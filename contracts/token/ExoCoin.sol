@@ -3,7 +3,7 @@ pragma solidity ^0.4.11;
 import "./MintableToken.sol";
 
 /**
- * This contract does this and that...
+ * Exorise Token
  */
 contract ExoCoin is MintableToken {
     string public constant name = "Exorise Token";

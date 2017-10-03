@@ -1,19 +1,9 @@
 pragma solidity ^0.4.11;
 
+import './BasicToken.sol';
+import '../admin/Ownable.sol';
 
-import './StandardToken.sol';
-import '../Ownable.sol';
-
-
-
-/**
- * @title Mintable token
- * @dev Simple ERC20 Token example, with mintable token creation
- * @dev Issue: * https://github.com/OpenZeppelin/zeppelin-solidity/issues/120
- * Based on code by TokenMarketNet: https://github.com/TokenMarketNet/ico/blob/master/contracts/MintableToken.sol
- */
-
-contract MintableToken is StandardToken, Ownable {
+contract MintableToken is BasicToken, Ownable {
   event Mint(address indexed to, uint256 amount);
   event MintFinished();
 
