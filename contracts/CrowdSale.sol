@@ -68,78 +68,107 @@ contract CrowdSale is Haltable {
 	}	
 
 	function () payable {
-		require(getState() == States.FirstFunding || getState() == States.SecondFunding || getState() == States.ThirdFunding);
+		require(canInvest());
 
-		//если текущая сумма превышает контрольную точку, то разбиваем сумму
-		//на 2 - одна пойдет в завершение текущего этапа, вторая в новый этап
-		uint256 overflow = 0;
 		uint256 amount = msg.value;
-		if(currentStageTotalInvested.add(msg.value) > convertingStrategy.dollarsToWei(goals[stageAchived]))
-		{
-			overflow = currentStageTotalInvested.add(msg.value).sub(convertingStrategy.dollarsToWei(goals[stageAchived]));
-			amount = currentStageTotalInvested.add(msg.value).sub(overflow);
-		}
+		uint256 realAmounted = 0;
 
-		if(stageBalances[stageAchived][msg.sender] == 0) {
-			stageBalances[stageAchived][msg.sender] = msg.value;
-			investorsCount = investorsCount.add(1);
-		}
-		else{
-			balances[stageAchived][msg.sender] = balances[stageAchived][msg.sender].add(msg.value);
-		}
+		totalInvested = totalInvested.add(amount);
 
+		realAmounted = processPayment(amount);
 
-		totalInvested = totalInvested.add(msg.value);
+		uint256 tokenAmount = pricingStrategy.calculatePrice(realAmounted);
+		token.mint(msg.sender, tokenAmount);
 
-		if(currentStageTotalInvested.add(msg.value) >)
-		currentStageTotalInvested = currentStageTotalInvested.add(msg.value);
-
-
-		if(totalInvested >= convertingStrategy.dollarsToWei(thirdGoal)) {
-			stageAchived(3);
-		} else if(totalInvested >= convertingStrategy.dollarsToWei(secondGoal)) {
-			stageAchived(2);
-		} else if(totalInvested >= convertingStrategy.dollarsToWei(firstGoal)) {
-			stageAchived(1);
-		}
-
-		uint256 amount = pricingStrategy.calculatePrice(msg.value);
-		token.mint(msg.sender, amount);
-
-		Invested(msg.sender, msg.value);
+		Invested(msg.sender, realAmounted);
 	} 
 
-	public function withdraw() returns(bool ok){
-		require(getState() == States.Fail);
-		require(balances[msg.sender] > 0);
+	/*
+	* 	Этот метод возвращает сумму, которые по факту принял контракт
+	*	(остальное по идее должно быть доступно для снятия).
+	*	Пока этот метод возвращет столько же, сколько и отправил пользователь,
+	*	но в дальнейшем это может измениться.
+	*	Не уверен, но мне кажется, что в этом методе не стоит делать 
+	* 	продажу токенов или другие внешние вызовы,
+	*	для этого стоит пользоваться возвращаемым значением.
+	*	@TODO сделать пересчет контрольной суммы этапа зависимым от курса.
+	*/
+	private processPayment(uint256 _value, address sender) returns (uint256) {
+		uint256 overflow = 0;
+		uint256 value = _value;
 
-		uint256 amount = balances[msg.sender];
-		balances[msg.sender] = 0;
+		uint i = currentStageIndex;
+
+		//обрабатываем ситуацию, когда последний этап еще не выполнен(stageGoal[i] != 0) и
+		//текущая сумма переведет нас на новый этап
+		if(stageGoal[i] != 0 && totalInvested.add(value) >= stageGoal[i]) {
+
+			//изменяем внутреннее состояние контракта
+			currentStageIndex = currentStageIndex.add(1);
+			//считаем превышение над текущей целью
+			overflow = totalInvested.add(value).sub(stageGoal[i]);
+			//считаем текущее значение
+			value = value.sub(overflow);
+			//прибавляем текущее значение к общей сумме начислений
+			totalInvested = totalInvested.add(value);
+			//прибавляем текущее значение к сумме начислений в прошедшем этапе
+			//необходимо для вывода средств.
+			stageInvested[i] = stageInvested[i].add(value);
+
+			//пока не знаю, как компилятор отнесется к увеличению несущестующей переменной.
+			//внутри вызова этого же метода далее, поэтому создам-ка я ее.
+			withdrawAmount[currentStageIndex][sender] = 0;
+			stageInvested[currentStageIndex] = 0;
+
+			//заканчиваем пройденный этап
+			finalizeStage(i);
+
+			//рекуксивно вызываем эту же функцию на тот случай,
+			//если сумма текущего платежа переведет сразу через один или более этапов
+			//В этом случае, можно не запоминать, сколько в уже прошлом этапе
+			//начислил пользователь, потому что он все равно их уже снять обратно не сможет.
+			return value + processPayment(overflow, sender);
+		} else {
+			//прибавляем текущее значение к общей сумме начислней
+			totalInvested = totalInvested.add(value);
+			//прибавляем текущее значение к сумме начислений в прошедшем этапе
+			//необходимо для вывода средств.
+			stageInvested[i] = stageInvested[i].add(value);
+
+			//увеличиваем разрешенную для снятия сумму в текущем этапе			
+			// Тут необходимо при каждом переходе в новый этап 
+			// заносить значение в только что обновленный индекс currentStageIndex
+			// тем самым имитируя обнуление начислений всех остальных пользователей
+			withdrawAmount[currentStageIndex][sender] = withdrawAmount[currentStageIndex][sender].add(value);
+
+			return value;
+		}
+	}
+
+	private function finalizeStage(uint i) {
+		beneficiary.send(stageInvested[i]);
+
+		StageFinalized(i, stageInvested[i]);
+	}
+
+	public function withdraw() returns(bool){
+		require(canWithdraw());
+
+		uint256 amount = withdrawAmount[currentStageIndex][msg.sender];
+		withdrawAmount[currentStageIndex][msg.sender] = 0;
 
 		msg.sender.transfer(amount);
 		return true;
 	}
 
-	private stageAchived(uint stage) {
-		//checks require
-
-		stageAchived = stage;
-		uint amount = currentStageTotalInvested;
-		currentStageTotalInvested = 0;
-
-		beneficiary.send(amount);
-		StageAchived(stage);
+	public function canInvest() returns(bool) {
+		/** @TODO replace me.. */
+		return true;
 	}
 
-	public function getState() constant returns (States) {		
-		if(now < startAt) return States.None;
-		if(now >= startAt && now <= startAt + duration) {
-			if(stageAchived == 0) return States.FirstFunding;
-			if(stageAchived == 1) return States.SecondFunding;
-			if(stageAchived == 2) return States.ThirdFunding;
-		}
-		if(now > startAt + duration && totalInvested >= convertingStrategy.dollarsToWei(thirdGoal)) return States.Success;
-		if(now > startAt + duration && totalInvested < convertingStrategy.dollarsToWei(thirdGoal)) return States.Fail;
+	public function canWithdraw() returns(bool) {
+		/** @TODO replace me.. */
+		return true;
 	}
 }
 
