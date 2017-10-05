@@ -3,7 +3,9 @@ pragma solidity ^0.4.11;
 import "./admin/Haltable.sol";
 
 import "./token/ExoCoin.sol";
-import "./ExoCoinPricingStrategy.sol";
+
+import "./PricingStrategy.sol";
+import "./ConvertingStrategy.sol";
 
 import "./libs/SafeMath.sol";
 
@@ -23,15 +25,18 @@ contract CrowdSale is Haltable {
 
     uint256 public totalInvested;
     uint256 public investorsCount;
+    uint256 public currentStageTotalInvested;
 
     mapping (address => uint256) balances;
+    balances[3] stageBalances;
 
 	enum States { None, FirstFunding, SecondFunding, ThirdFunding, Success, Fail}
 
 	ExoCoin public token = new ExoCoin();
 
-	ExoCoinPricingStrategy pricingStrategy;
+	PricingStrategy pricingStrategy;
 	ConvertingStrategy convertingStrategy;
+	uint stageAchived;
 
 	event Invested(address indexed _investor, uint256 _value);	
 
@@ -41,7 +46,8 @@ contract CrowdSale is Haltable {
 			uint256 _firstGoal, 
 			uint256 _secondGoal, 
 			uint256 _thidrGoal, 
-			address _beneficiary) {
+			address _beneficiary,
+			uint256 _weiInOneDollar) {
 
 		startAt = _start;
 		duration = _duration;
@@ -54,28 +60,56 @@ contract CrowdSale is Haltable {
 
 		totalInvested = 0;
 		investorsCount = 0;
+
+		convertingStrategy = new ConvertingStrategy(_weiInOneDollar);
+		currentStageTotalInvested = 0;
+
+		stageAchived = 0;
 	}	
 
 	function () payable {
 		require(getState() == States.FirstFunding || getState() == States.SecondFunding || getState() == States.ThirdFunding);
 
-		if(balances[msg.sender] == 0){
-			balances[msg.sender] = msg.value;
+		//если текущая сумма превышает контрольную точку, то разбиваем сумму
+		//на 2 - одна пойдет в завершение текущего этапа, вторая в новый этап
+		uint256 overflow = 0;
+		uint256 amount = msg.value;
+		if(currentStageTotalInvested.add(msg.value) > convertingStrategy.dollarsToWei(goals[stageAchived]))
+		{
+			overflow = currentStageTotalInvested.add(msg.value).sub(convertingStrategy.dollarsToWei(goals[stageAchived]));
+			amount = currentStageTotalInvested.add(msg.value).sub(overflow);
+		}
+
+		if(stageBalances[stageAchived][msg.sender] == 0) {
+			stageBalances[stageAchived][msg.sender] = msg.value;
 			investorsCount = investorsCount.add(1);
 		}
 		else{
-			balances[msg.sender] = balances[msg.sender].add(msg.value);
+			balances[stageAchived][msg.sender] = balances[stageAchived][msg.sender].add(msg.value);
+		}
+
+
+		totalInvested = totalInvested.add(msg.value);
+
+		if(currentStageTotalInvested.add(msg.value) >)
+		currentStageTotalInvested = currentStageTotalInvested.add(msg.value);
+
+
+		if(totalInvested >= convertingStrategy.dollarsToWei(thirdGoal)) {
+			stageAchived(3);
+		} else if(totalInvested >= convertingStrategy.dollarsToWei(secondGoal)) {
+			stageAchived(2);
+		} else if(totalInvested >= convertingStrategy.dollarsToWei(firstGoal)) {
+			stageAchived(1);
 		}
 
 		uint256 amount = pricingStrategy.calculatePrice(msg.value);
-
-		totalInvested = totalInvested.add(msg.value);
 		token.mint(msg.sender, amount);
 
 		Invested(msg.sender, msg.value);
 	} 
 
-	function withdraw() returns(bool ok){
+	public function withdraw() returns(bool ok){
 		require(getState() == States.Fail);
 		require(balances[msg.sender] > 0);
 
@@ -86,24 +120,26 @@ contract CrowdSale is Haltable {
 		return true;
 	}
 
-	function finalize() returns(bool ok) {
-		require(getState() == States.Success);
-		require(!finalized);
+	private stageAchived(uint stage) {
+		//checks require
 
-		finalized = true;
+		stageAchived = stage;
+		uint amount = currentStageTotalInvested;
+		currentStageTotalInvested = 0;
 
-		beneficiary.transfer(this.balance);
+		beneficiary.send(amount);
+		StageAchived(stage);
 	}
 
-	function getState() public constant returns (States) {
+	public function getState() constant returns (States) {		
 		if(now < startAt) return States.None;
 		if(now >= startAt && now <= startAt + duration) {
-			if(totalInvested < convertToEther(firstGoal)) return States.FirstFunding;
-			if(totalInvested < convertToEther(secondGoal)) return States.SecondFunding;
-			if(totalInvested < convertToEther(thirdGoal)) return States.ThirdFunding;
-		} 
-		if(now > startAt + duration && totalInvested >= goal) return States.Success;
-		if(now > startAt + duration && totalInvested < goal) return States.Fail;
+			if(stageAchived == 0) return States.FirstFunding;
+			if(stageAchived == 1) return States.SecondFunding;
+			if(stageAchived == 2) return States.ThirdFunding;
+		}
+		if(now > startAt + duration && totalInvested >= convertingStrategy.dollarsToWei(thirdGoal)) return States.Success;
+		if(now > startAt + duration && totalInvested < convertingStrategy.dollarsToWei(thirdGoal)) return States.Fail;
 	}
 }
 

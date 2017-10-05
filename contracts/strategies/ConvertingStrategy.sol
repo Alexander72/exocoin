@@ -1,22 +1,27 @@
 pragma solidity ^0.4.11;
 
 import "../libs/SafeMath.sol";
+import "../admin/Ownable.sol";
 
-contract ConvertingStrategy {
-	
+contract ConvertingStrategy is Ownable {
+
 	using SafeMath for uint256;
 
-	uint256 weiInOneDollar;
+	uint256 public weiInOneDollar;
 
 	function ConvertingStrategy (uint256 _weiInOneDollar) {
 		weiInOneDollar = _weiInOneDollar;
 	}	
 
+	function setWieInOneDollar(uint256 _weiInOneDollar) onlyOwner {
+		weiInOneDollar = _weiInOneDollar;
+	}
+
 	function weiToDollars(uint256 wei) constant returns(uint256) {
 		return wei.div(weiInOneDollar);
 	}
 
-	function dollarsTowei(uint256 dollars) constant returns(uint256) {
+	function dollarsToWei(uint256 dollars) constant returns(uint256) {
 		return wei.mul(weiInOneDollar);
 	}
 }
