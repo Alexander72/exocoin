@@ -65,7 +65,7 @@ contract CrowdSale is Haltable {
 		}
 	}	
 
-	function () payable {
+	function () stopInEmergency payable {
 		require(canInvest());
 
 		uint256 amount = msg.value;
@@ -165,7 +165,7 @@ contract CrowdSale is Haltable {
 		msg.sender.transfer(amount);
 
 		Withdrawed(msg.sender, amount);
-		
+
 		return true;
 	}
 

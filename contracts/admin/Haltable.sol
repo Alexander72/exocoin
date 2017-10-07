@@ -6,7 +6,7 @@
 
 pragma solidity ^0.4.6;
 
-import "../Ownable.sol";
+import "./Ownable.sol";
 
 /*
  * Haltable
