@@ -14,47 +14,41 @@ contract CrowdSale is Haltable {
 	using SafeMath for uint256;
 
     uint256 public startAt;
-    uint256 public duration;
-
-    //goals in dollars
-    uint256 public firstGoal;
-    uint256 public secondGoal;
-    uint256 public thirdGoal;
+    uint256 public finishAt;
 
     address beneficiary;
 
+    uint public currentStageIndex;
+
+    //goals in ethers
+    uint256[] public stageGoal;
+
+    mapping (uint => mapping(address => uint256)) public withdrawAmount;
+    mapping (uint => mapping(address => uint256)) public stageInvested;
+    uint[] public stageFinalized;
+
+
     uint256 public totalInvested;
     uint256 public investorsCount;
-    uint256 public currentStageTotalInvested;
-
-    mapping (address => uint256) balances;
-    balances[3] stageBalances;
-
-	enum States { None, FirstFunding, SecondFunding, ThirdFunding, Success, Fail}
 
 	ExoCoin public token = new ExoCoin();
 
 	PricingStrategy pricingStrategy;
 	ConvertingStrategy convertingStrategy;
-	uint stageAchived;
 
 	event Invested(address indexed _investor, uint256 _value);	
+	event StageFinalized(uint _stageIndex, uint256 _stageInvested);
+	event Withdrawed(address withdrawer, uint256 amount);
 
 	function CrowdSale(
 			uint256 _start, 
-			uint256 _duration, 
-			uint256 _firstGoal, 
-			uint256 _secondGoal, 
-			uint256 _thidrGoal, 
+			uint256 _duration,
 			address _beneficiary,
+			uint256[] _stageGoal,
 			uint256 _weiInOneDollar) {
 
 		startAt = _start;
-		duration = _duration;
-
-		firstGoal = _firstGoal;
-		secondGoal = _secondGoal;
-		thirdGoal = _thirdGoal;
+		finishAt = startAt + _duration;
 
 		beneficiary = _beneficiary;
 
@@ -62,9 +56,13 @@ contract CrowdSale is Haltable {
 		investorsCount = 0;
 
 		convertingStrategy = new ConvertingStrategy(_weiInOneDollar);
-		currentStageTotalInvested = 0;
+		pricingStrategy = new PricingStrategy();		
 
-		stageAchived = 0;
+		currentStageIndex = 0;
+		for(uint i = 0; i < _stageGoal.length; i++) {
+			stageGoal[i] = convertingStrategy.dollarsToWei(_stageGoal[i]);
+			stageFinalized[i] = false;
+		}
 	}	
 
 	function () payable {
@@ -75,7 +73,7 @@ contract CrowdSale is Haltable {
 
 		totalInvested = totalInvested.add(amount);
 
-		realAmounted = processPayment(amount);
+		realAmounted = processPayment(amount, msg.sender);
 
 		uint256 tokenAmount = pricingStrategy.calculatePrice(realAmounted);
 		token.mint(msg.sender, tokenAmount);
@@ -146,6 +144,13 @@ contract CrowdSale is Haltable {
 	}
 
 	private function finalizeStage(uint i) {
+		require(now > startAt);
+		require(currentStageIndex > 0);
+		require(totalInvested == stageGoal[currentStageIndex.sub(1)]);
+		require(stageFinalized[currentStageIndex.sub(1)]);
+
+		stageFinalized[currentStageIndex.sub(1)] = true;
+
 		beneficiary.send(stageInvested[i]);
 
 		StageFinalized(i, stageInvested[i]);
@@ -158,18 +163,21 @@ contract CrowdSale is Haltable {
 		withdrawAmount[currentStageIndex][msg.sender] = 0;
 
 		msg.sender.transfer(amount);
+
+		Withdrawed(msg.sender, amount);
+		
 		return true;
 	}
 
 	public function canInvest() returns(bool) {
-		if(now <= startAt + duration)
+		if(now >= startAt && now <= finishAt)
 			return true;
 
 		return false;
 	}
 
 	public function canWithdraw() returns(bool) {
-		if(now > startAt + duration && withdrawAmount[currentStageIndex][msg.sender] > 0)
+		if(now > finishAt && withdrawAmount[currentStageIndex][msg.sender] > 0)
 			return true;
 
 		return false;
