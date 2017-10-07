@@ -4,8 +4,8 @@ import "./admin/Haltable.sol";
 
 import "./token/ExoCoin.sol";
 
-import "./PricingStrategy.sol";
-import "./ConvertingStrategy.sol";
+import "./strategies/PricingStrategy.sol";
+import "./strategies/ConvertingStrategy.sol";
 
 import "./libs/SafeMath.sol";
 
@@ -24,8 +24,8 @@ contract CrowdSale is Haltable {
     uint256[] public stageGoal;
 
     mapping (uint => mapping(address => uint256)) public withdrawAmount;
-    mapping (uint => mapping(address => uint256)) public stageInvested;
-    uint[] public stageFinalized;
+    uint256[] public stageInvested;
+    bool[] public stageFinalized;
 
 
     uint256 public totalInvested;
@@ -91,7 +91,7 @@ contract CrowdSale is Haltable {
 	*	для этого стоит пользоваться возвращаемым значением.
 	*	@TODO сделать пересчет контрольной суммы этапа зависимым от курса.
 	*/
-	private processPayment(uint256 _value, address sender) returns (uint256) {
+	function processPayment(uint256 _value, address sender) private returns (uint256) {
 		uint256 overflow = 0;
 		uint256 value = _value;
 
@@ -143,7 +143,7 @@ contract CrowdSale is Haltable {
 		}
 	}
 
-	private function finalizeStage(uint i) {
+	function finalizeStage(uint i) private {
 		require(now > startAt);
 		require(currentStageIndex > 0);
 		require(totalInvested == stageGoal[currentStageIndex.sub(1)]);
@@ -151,12 +151,12 @@ contract CrowdSale is Haltable {
 
 		stageFinalized[currentStageIndex.sub(1)] = true;
 
-		beneficiary.send(stageInvested[i]);
+		beneficiary.transfer(stageInvested[i]);
 
 		StageFinalized(i, stageInvested[i]);
 	}
 
-	public function withdraw() returns(bool){
+	function withdraw() public returns(bool) {
 		require(canWithdraw());
 
 		uint256 amount = withdrawAmount[currentStageIndex][msg.sender];
@@ -169,14 +169,14 @@ contract CrowdSale is Haltable {
 		return true;
 	}
 
-	public function canInvest() returns(bool) {
+	function canInvest() public returns(bool) {
 		if(now >= startAt && now <= finishAt)
 			return true;
 
 		return false;
 	}
 
-	public function canWithdraw() returns(bool) {
+	function canWithdraw() public returns(bool) {
 		if(now > finishAt && withdrawAmount[currentStageIndex][msg.sender] > 0)
 			return true;
 

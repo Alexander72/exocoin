@@ -17,11 +17,11 @@ contract ConvertingStrategy is Ownable {
 		weiInOneDollar = _weiInOneDollar;
 	}
 
-	function weiToDollars(uint256 wei) constant returns(uint256) {
-		return wei.div(weiInOneDollar);
+	function weiToDollars(uint256 _wei) constant returns(uint256) {
+		return _wei.div(weiInOneDollar);
 	}
 
 	function dollarsToWei(uint256 dollars) constant returns(uint256) {
-		return wei.mul(weiInOneDollar);
+		return dollars.mul(weiInOneDollar);
 	}
 }
