@@ -13,19 +13,19 @@ contract CrowdSale is Haltable {
 
 	using SafeMath for uint256;
 
-    uint256 public startAt;
-    uint256 public finishAt;
+    uint public startAt;
+    uint public finishAt;
 
     address beneficiary;
 
     uint public currentStageIndex;
 
     //goals in ethers
-    uint256[] public stageGoal;
+    uint256[10] public stageGoal;
 
     mapping (uint => mapping(address => uint256)) public withdrawAmount;
-    uint256[] public stageInvested;
-    bool[] public stageFinalized;
+    uint256[10] public stageInvested;
+    bool[10] public stageFinalized;
 
 
     uint256 public totalInvested;
@@ -33,16 +33,16 @@ contract CrowdSale is Haltable {
 
 	ExoCoin public token = new ExoCoin();
 
-	PricingStrategy pricingStrategy;
-	ConvertingStrategy convertingStrategy;
+	PricingStrategy public pricingStrategy;
+	ConvertingStrategy public convertingStrategy;
 
 	event Invested(address indexed _investor, uint256 _value);	
 	event StageFinalized(uint _stageIndex, uint256 _stageInvested);
 	event Withdrawed(address withdrawer, uint256 amount);
 
 	function CrowdSale(
-			uint256 _start, 
-			uint256 _duration,
+			uint _start, 
+			uint _duration,
 			address _beneficiary,
 			uint256[] _stageGoal,
 			uint256 _weiInOneDollar) {
