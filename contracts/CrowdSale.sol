@@ -162,13 +162,17 @@ contract CrowdSale is Haltable {
 	}
 
 	public function canInvest() returns(bool) {
-		/** @TODO replace me.. */
-		return true;
+		if(now <= startAt + duration)
+			return true;
+
+		return false;
 	}
 
 	public function canWithdraw() returns(bool) {
-		/** @TODO replace me.. */
-		return true;
+		if(now > startAt + duration && withdrawAmount[currentStageIndex][msg.sender] > 0)
+			return true;
+
+		return false;
 	}
 }
 
