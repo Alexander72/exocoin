@@ -71,7 +71,8 @@ contract CrowdSale is Haltable {
 		uint256 amount = msg.value;
 		uint256 realAmounted = 0;
 
-		totalInvested = totalInvested.add(amount);
+		//ERROR!!
+		//totalInvested = totalInvested.add(amount);
 
 		realAmounted = processPayment(amount, msg.sender);
 
