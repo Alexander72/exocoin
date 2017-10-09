@@ -21,17 +21,17 @@ contract Haltable is Ownable {
   bool public halted;
 
   modifier stopInEmergency {
-    require(halted);
+    require(!halted);
     _;
   }
 
   modifier stopNonOwnersInEmergency {
-    require(halted && msg.sender != owner);
+    require(!halted && msg.sender != owner);
     _;
   }
 
   modifier onlyInEmergency {
-    require(!halted);
+    require(halted);
     _;
   }
 

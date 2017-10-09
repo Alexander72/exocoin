@@ -45,7 +45,7 @@ contract CrowdSale is Haltable {
 			uint _duration,
 			address _beneficiary,
 			uint256[] _stageGoal,
-			uint256 _weiInOneDollar) {
+			uint256 _weiInOneDollar) payable {
 
 		startAt = _start;
 		finishAt = startAt + _duration;
@@ -148,7 +148,7 @@ contract CrowdSale is Haltable {
 		require(now > startAt);
 		require(currentStageIndex > 0);
 		require(totalInvested == stageGoal[currentStageIndex.sub(1)]);
-		require(stageFinalized[currentStageIndex.sub(1)]);
+		require(!stageFinalized[currentStageIndex.sub(1)]);
 
 		stageFinalized[currentStageIndex.sub(1)] = true;
 
@@ -170,14 +170,14 @@ contract CrowdSale is Haltable {
 		return true;
 	}
 
-	function canInvest() public returns(bool) {
+	function canInvest() public constant returns(bool) {
 		if(now >= startAt && now <= finishAt)
 			return true;
 
 		return false;
 	}
 
-	function canWithdraw() public returns(bool) {
+	function canWithdraw() public constant returns(bool) {
 		if(now > finishAt && withdrawAmount[currentStageIndex][msg.sender] > 0)
 			return true;
 
