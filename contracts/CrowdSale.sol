@@ -71,9 +71,6 @@ contract CrowdSale is Haltable {
 		uint256 amount = msg.value;
 		uint256 realAmounted = 0;
 
-		//ERROR!!
-		//totalInvested = totalInvested.add(amount);
-
 		realAmounted = processPayment(amount, msg.sender);
 
 		uint256 tokenAmount = pricingStrategy.calculatePrice(realAmounted);
@@ -157,7 +154,7 @@ contract CrowdSale is Haltable {
 		StageFinalized(i, stageInvested[i]);
 	}
 
-	function withdraw() public returns(bool) {
+	function withdraw() stopInEmergency public returns(bool) {
 		require(canWithdraw());
 
 		uint256 amount = withdrawAmount[currentStageIndex][msg.sender];
