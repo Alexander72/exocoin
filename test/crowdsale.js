@@ -2,55 +2,94 @@ const Web3 = require('web3')
 let web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
 var CrowdSale = artifacts.require("./CrowdSale.sol");
 
-//console.log(web3.utils.fromWei(300000000000000000, 'ether'));
-
 contract('CrowdSale', function(accounts) {
-
-	printBalances(accounts);
 
 	var crowdSale;
 	var totalInvestedOld;
+
+	printBalances(accounts);
 
 	it("deposit 1 ether", function(done){
 		CrowdSale.deployed().then(function(instance) {
 			crowdSale = instance;
 
-			return crowdSale.canInvest.call();
-		}).then(function(canInvest){
-			console.log('canInvest: ' + canInvest);
-
-			assert.equal(canInvest, true, 'investing stage should be now');
-
 			return crowdSale.totalInvested.call();
 		}).then(function(totalInvested){
 			totalInvestedOld = totalInvested;
-			console.log('totalInvested: ' + totalInvested);
-			console.log('try to send ' + web3.utils.toWei(0.3, 'ether') + ' wei');
 
 			return crowdSale.sendTransaction({
 				from: accounts[4],
-				value: web3.utils.toWei(0.3, 'ether'),
+				value: web3.utils.toWei(1, 'ether'),
 				to: crowdSale.address
 			});
 		}).then(function(tx) {
-			console.log(tx.reciept);
 		    assert.isOk(tx.receipt);
 
 			return crowdSale.totalInvested.call();
 		}).then(function(totalInvested){
-			console.log('new totalInvested : ' + totalInvested);
 
-			assert.equal(totalInvested, totalInvestedOld + web3.utils.toWei(0.3, 'ether'), 'total balance should be '+ web3.utils.toWei(0.3, 'ether'));
+			assert.equal(totalInvested, (Number(totalInvestedOld) + Number(web3.utils.toWei(1, 'ether'))), 'total balance should be '+ (Number(totalInvestedOld) + Number(web3.utils.toWei(1, 'ether'))));
 
+			return crowdSale.withdrawAmount.call(0, accounts[4]);
+		}).then(function(canWithdraw) {
+			assert.equal(canWithdraw, web3.utils.toWei(1, 'ether'), 'We are at first stage, 4th acc should can withdraw 1 ether');
+
+			done();
 		});
+	});
 
+	it('get second stage', function(done){
+		CrowdSale.deployed().then(function(instance) {
+			crowdSale = instance;
+
+			return crowdSale.stageInvested.call(0);
+		}).then(function(stageInvested) {
+			assert.equal(stageInvested, web3.utils.toWei(1, 'ether'), 'in first stage should be invested 1 ether');
+
+			return crowdSale.sendTransaction({
+				from: accounts[5],
+				value: web3.utils.toWei(7, 'ether'),
+				to: crowdSale.address
+			});
+		}).then(function(tx){			
+		    assert.isOk(tx.receipt);
+
+			return crowdSale.totalInvested.call();
+		}).then(function(totalInvested){
+			assert.equal(totalInvested, web3.utils.toWei(8, 'ether'), 'second invest failed');
+
+			return crowdSale.sendTransaction({
+				from: accounts[6],
+				value: web3.utils.toWei(6, 'ether'),
+				to: crowdSale.address
+			});
+		}).then(function(tx){
+		    assert.isOk(tx.receipt);
+
+			return crowdSale.totalInvested.call();
+		}).then(function(totalInvested){
+			assert.equal(totalInvested, web3.utils.toWei(14, 'ether'), 'third invest failed');
+
+			return crowdSale.currentStageIndex.call();
+		}).then((stage) => {
+			assert.equal(stage, 1, 'we should achive second stage(1)');
+
+			return crowdSale.stageGoal.call(0);
+		}).then((firstGoal) => {
+			assert.equal(firstGoal, web3.utils.toWei(13, 'ether'), 'first goal check');
+
+			return web3.eth.getBalance(accounts[2]);
+		}).then((balance) => {
+			assert.equal(balance, web3.utils.toWei(113, 'ether'), 'benefeciary should have 113 ether(100 + 13)');
+			done();
+		});
 	});
 
 	function printBalances(accounts) {
 		var value;
 	    accounts.forEach(function(ac, i) {
 	    	web3.eth.getBalance(ac).then(function(value){
-	    		console.log(ac, value);
+	    		console.log(ac + '('+i+')', value);
 	    	})
 	    })
 	}
