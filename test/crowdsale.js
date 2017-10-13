@@ -1,5 +1,3 @@
-const Web3 = require('web3')
-let web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
 var CrowdSale = artifacts.require("./CrowdSale.sol");
 
 contract('CrowdSale', function(accounts) {
@@ -7,7 +5,59 @@ contract('CrowdSale', function(accounts) {
 	var crowdSale;
 	var totalInvestedOld;
 
-	printBalances(accounts);
+	const increaseTime = function (time) {
+	  return web3.currentProvider.send({
+	      jsonrpc: "2.0",
+	      method: "evm_increaseTime",
+	      params: [time],
+	      id: new Date().getTime()
+	    });
+	};
+
+	const mine = function() {
+	  return web3.currentProvider.send({
+	      jsonrpc: "2.0",
+	      method: "evm_mine",
+	      params: [], 
+	      id: new Date().getTime()
+	    });
+	};
+
+	const getLatestBlock = function() {
+		return web3.eth.getBlock('latest');
+	};
+
+	//printBalances(accounts);
+
+	it('try to invest before investing stage', function(done){
+		CrowdSale.deployed().then(function(instance) {
+			return instance.sendTransaction({
+				from: accounts[4],
+				value: web3.toWei(1, 'ether'),
+				to: instance.address
+			});
+		}).catch((err) => {
+			const isContractThrow = err.message.indexOf('VM Exception while processing transaction: invalid opcode') != -1;
+			assert(isContractThrow, "Expected throw, got '" + err + "' instead");
+			done();
+		});
+	});
+
+	it("test evm_increaseTime", function (done) {
+		CrowdSale.deployed().then(function(instance) {
+			crowdSale = instance;
+			return getLatestBlock();
+		}).then((block) => {
+		    return increaseTime(3600 * 3)
+		}).then((res) => {
+			return mine();
+		}).then((res) => {
+			return getLatestBlock();
+		}).then((block) => {
+			assert.isAbove(block.timestamp, Math.floor(Date.now() / 1000), 'time should be increased');
+			done();
+		});
+	});
 
 	it("deposit 1 ether", function(done){
 		CrowdSale.deployed().then(function(instance) {
@@ -19,7 +69,7 @@ contract('CrowdSale', function(accounts) {
 
 			return crowdSale.sendTransaction({
 				from: accounts[4],
-				value: web3.utils.toWei(1, 'ether'),
+				value: web3.toWei(1, 'ether'),
 				to: crowdSale.address
 			});
 		}).then(function(tx) {
@@ -28,11 +78,11 @@ contract('CrowdSale', function(accounts) {
 			return crowdSale.totalInvested.call();
 		}).then(function(totalInvested){
 
-			assert.equal(totalInvested, (Number(totalInvestedOld) + Number(web3.utils.toWei(1, 'ether'))), 'total balance should be '+ (Number(totalInvestedOld) + Number(web3.utils.toWei(1, 'ether'))));
+			assert.equal(totalInvested, (Number(totalInvestedOld) + Number(web3.toWei(1, 'ether'))), 'total balance should be '+ (Number(totalInvestedOld) + Number(web3.toWei(1, 'ether'))));
 
 			return crowdSale.withdrawAmount.call(0, accounts[4]);
 		}).then(function(canWithdraw) {
-			assert.equal(canWithdraw, web3.utils.toWei(1, 'ether'), 'We are at first stage, 4th acc should can withdraw 1 ether');
+			assert.equal(canWithdraw, web3.toWei(1, 'ether'), 'We are at first stage, 4th acc should can withdraw 1 ether');
 
 			done();
 		});
@@ -44,11 +94,11 @@ contract('CrowdSale', function(accounts) {
 
 			return crowdSale.stageInvested.call(0);
 		}).then(function(stageInvested) {
-			assert.equal(stageInvested, web3.utils.toWei(1, 'ether'), 'in first stage should be invested 1 ether');
+			assert.equal(stageInvested, web3.toWei(1, 'ether'), 'in first stage should be invested 1 ether');
 
 			return crowdSale.sendTransaction({
 				from: accounts[5],
-				value: web3.utils.toWei(7, 'ether'),
+				value: web3.toWei(7, 'ether'),
 				to: crowdSale.address
 			});
 		}).then(function(tx){			
@@ -56,11 +106,11 @@ contract('CrowdSale', function(accounts) {
 
 			return crowdSale.totalInvested.call();
 		}).then(function(totalInvested){
-			assert.equal(totalInvested, web3.utils.toWei(8, 'ether'), 'second invest failed');
+			assert.equal(totalInvested, web3.toWei(8, 'ether'), 'second invest failed');
 
 			return crowdSale.sendTransaction({
 				from: accounts[6],
-				value: web3.utils.toWei(6, 'ether'),
+				value: web3.toWei(6, 'ether'),
 				to: crowdSale.address
 			});
 		}).then(function(tx){
@@ -68,7 +118,7 @@ contract('CrowdSale', function(accounts) {
 
 			return crowdSale.totalInvested.call();
 		}).then(function(totalInvested){
-			assert.equal(totalInvested, web3.utils.toWei(14, 'ether'), 'third invest failed');
+			assert.equal(totalInvested, web3.toWei(14, 'ether'), 'third invest failed');
 
 			return crowdSale.currentStageIndex.call();
 		}).then((stage) => {
@@ -76,21 +126,21 @@ contract('CrowdSale', function(accounts) {
 
 			return crowdSale.stageGoal.call(0);
 		}).then((firstGoal) => {
-			assert.equal(firstGoal, web3.utils.toWei(13, 'ether'), 'first goal check');
+			assert.equal(firstGoal, web3.toWei(13, 'ether'), 'first goal check');
 
 			return web3.eth.getBalance(accounts[2]);
 		}).then((balance) => {
-			assert.equal(balance, web3.utils.toWei(113, 'ether'), 'benefeciary should have 113 ether(100 + 13)');
+			assert.equal(balance, web3.toWei(113, 'ether'), 'benefeciary should have 113 ether(100 + 13)');
 			done();
 		});
 	});
 
-	function printBalances(accounts) {
+	/*function printBalances(accounts) {
 		var value;
 	    accounts.forEach(function(ac, i) {
 	    	web3.eth.getBalance(ac).then(function(value){
 	    		console.log(ac + '('+i+')', value);
 	    	})
 	    })
-	}
+	}*/
 });
