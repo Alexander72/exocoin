@@ -4,7 +4,7 @@ var CrowdSale = artifacts.require("CrowdSale");
 
 module.exports = function(deployer, network, accounts) {
   deployer.deploy(CrowdSale,
-  	Math.floor(Date.now() / 1000), 
+  	Math.floor(Date.now() / 1000) + 3600 * 2, 
   	3600 * 5, 
   	accounts[2],
   	[
