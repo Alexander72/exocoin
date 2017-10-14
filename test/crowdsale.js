@@ -1,8 +1,10 @@
-var CrowdSale = artifacts.require("./CrowdSale.sol");
+const CrowdSale = artifacts.require("CrowdSale");
+const ExoCoin = artifacts.require("ExoCoin");
 
 contract('CrowdSale', function(accounts) {
 
 	var crowdSale;
+	var exoCoin;
 	var totalInvestedOld;
 
 	const increaseTime = function (time) {
@@ -131,6 +133,20 @@ contract('CrowdSale', function(accounts) {
 			return web3.eth.getBalance(accounts[2]);
 		}).then((balance) => {
 			assert.equal(balance, web3.toWei(113, 'ether'), 'benefeciary should have 113 ether(100 + 13)');
+			done();
+		});
+	});
+
+	it('Check exocoin balance', function(done) {
+		CrowdSale.deployed().then((instance) => {
+			crowdSale = instance;
+			return crowdSale.token.call();
+		}).then((tokenAddress) => {
+			return ExoCoin.at(tokenAddress);
+		}).then((tokenInstance) => {
+			return tokenInstance.balanceOf(accounts[4]);
+		}).then((balance) => {
+			assert.equal(balance, web3.toWei(2, 'ether'), 'token should be minted');
 			done();
 		});
 	});
