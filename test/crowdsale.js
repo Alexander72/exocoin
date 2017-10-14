@@ -45,6 +45,9 @@ contract('CrowdSale', function(accounts) {
 		});
 	});
 
+//Это работает хреново - только первый раз оно запускается. 
+//все последующие разы почему то сваливается в бесконечность, вероятно, где-то не вызывается done()
+//или промис не отрабатывает. Помни! в прошлый раз эта херня вообще валила процесс testrpc.
 	it("test evm_increaseTime", function (done) {
 		CrowdSale.deployed().then(function(instance) {
 			crowdSale = instance;
