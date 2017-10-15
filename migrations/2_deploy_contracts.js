@@ -9,7 +9,7 @@ module.exports = function(deployer, network, accounts) {
 
   deployer.deploy(CrowdSale,
     config.startAt,
-    config.duration,
+    config.finishAt,
     beneficiary,
     config.goals,
     Math.floor(web3.toWei(1, 'ether') / config.initialDollarsInOneEther),

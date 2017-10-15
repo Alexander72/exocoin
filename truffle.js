@@ -6,7 +6,7 @@ module.exports = {
       network_id: "*", // Match any network id
       initialization: {
 	  	startAt: Math.floor(Date.now() / 1000) + 3600 * 2, 
-	  	duration: 3600 * 5, 
+	  	finishAt: Math.floor(Date.now() / 1000) + 3600 * 7, 
 	  	goals: [
 		    13 * 1000 * 1000,
 		    30 * 1000 * 1000,

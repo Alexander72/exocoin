@@ -42,13 +42,13 @@ contract CrowdSale is Haltable {
 
 	function CrowdSale(
 			uint _start, 
-			uint _duration,
+			uint _finish,
 			address _beneficiary,
 			uint256[] _stageGoal,
 			uint256 _weiInOneDollar) payable {
 
 		startAt = _start;
-		finishAt = startAt + _duration;
+		finishAt = _finish;
 
 		beneficiary = _beneficiary;
 
@@ -63,6 +63,16 @@ contract CrowdSale is Haltable {
 			stageGoal[i] = convertingStrategy.dollarsToWei(_stageGoal[i]);
 			stageFinalized[i] = false;
 		}
+	}
+
+	function setWeiInOneDollar(uint256 _weiInOneDollar) onlyOwner returns(bool) {		
+		return convertingStrategy.setWeiInOneDollar(_weiInOneDollar);
+	}
+
+	function setFinishAt(uint _finish) onlyOwner returns(bool) {		
+		finishAt = _finish;
+
+		return true;
 	}	
 
 	function () stopInEmergency payable {
