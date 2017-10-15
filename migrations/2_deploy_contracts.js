@@ -1,17 +1,17 @@
-const Web3 = require('web3')
-let web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"))
+const networks = require('../truffle.js');
 var CrowdSale = artifacts.require("CrowdSale");
 
+
 module.exports = function(deployer, network, accounts) {
+  const config = networks.networks[network].initialization;
+  const beneficiary = network == 'live' && config.beneficiary ? config.beneficiary : accounts[0];
+
+
   deployer.deploy(CrowdSale,
-  	Math.floor(Date.now() / 1000) + 3600 * 2, 
-  	3600 * 5, 
-  	accounts[2],
-  	[
-  		13,
-  		30,
-  		50,
-  	],
-  	web3.utils.toWei(1, 'ether'),
+    config.startAt,
+    config.duration,
+    beneficiary,
+    config.goals,
+    Math.floor(web3.toWei(1, 'ether') / config.initialDollarsInOneEther),
   );
 };
