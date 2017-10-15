@@ -38,6 +38,8 @@ contract('CrowdSale', function(accounts) {
 				value: web3.toWei(1, 'ether'),
 				to: instance.address
 			});
+		}).then((res) => {
+			throw new Error('it should be impossible to invest before start time');
 		}).catch((err) => {
 			const isContractThrow = err.message.indexOf('VM Exception while processing transaction: invalid opcode') != -1;
 			assert(isContractThrow, "Expected throw, got '" + err + "' instead");
@@ -45,9 +47,6 @@ contract('CrowdSale', function(accounts) {
 		});
 	});
 
-//Это работает хреново - только первый раз оно запускается. 
-//все последующие разы почему то сваливается в бесконечность, вероятно, где-то не вызывается done()
-//или промис не отрабатывает. Помни! в прошлый раз эта херня вообще валила процесс testrpc.
 	it("test evm_increaseTime", function (done) {
 		CrowdSale.deployed().then(function(instance) {
 			crowdSale = instance;
