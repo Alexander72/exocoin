@@ -13,7 +13,8 @@ module.exports = {
   		    50 * 1000 * 1000
   	  	],
   	  	initialDollarsInOneEther: 330,
-        initialTokensInOneEther: 2, 
+        initialTokensInOneEther: 2,
+        minInvestValueInEther:  0.000001
       }
     }
   }

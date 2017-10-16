@@ -14,5 +14,6 @@ module.exports = function(deployer, network, accounts) {
     config.goals,
     Math.floor(web3.toWei(1, 'ether') / config.initialDollarsInOneEther),
     Math.floor(web3.toWei(1, 'ether') / config.initialTokensInOneEther),
+    web3.toWei(config.minInvestValueInEther, 'ether')
   );
 };

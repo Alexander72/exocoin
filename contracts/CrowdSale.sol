@@ -20,7 +20,7 @@ contract CrowdSale is Haltable {
 
     uint public currentStageIndex;
 
-    //goals in ethers
+    //goals in wei
     uint256[10] public stageGoal;
 
     mapping (uint => mapping(address => uint256)) public withdrawAmount;
@@ -30,6 +30,8 @@ contract CrowdSale is Haltable {
 
     uint256 public totalInvested;
     uint256 public investorsCount;
+
+    uint256 public minInvestValue;
 
 	ExoCoin public token = new ExoCoin();
 
@@ -46,7 +48,8 @@ contract CrowdSale is Haltable {
 			address _beneficiary,
 			uint256[] _stageGoal,
 			uint256 _weiInOneDollar,
-			uint256 _weiInOneToken) payable {
+			uint256 _weiInOneToken,
+			uint256 _minInvestValue) payable {
 
 		require(_start >= now);
 		require(_finish >= _start);
@@ -54,11 +57,14 @@ contract CrowdSale is Haltable {
 		require(_weiInOneDollar > 0);
 		require(_weiInOneToken > 0);
 		require(_stageGoal.length <= 10);
+		require(_minInvestValue > 0);
 
 		startAt = _start;
 		finishAt = _finish;
 
 		beneficiary = _beneficiary;
+
+		minInvestValue = _minInvestValue;
 
 		totalInvested = 0;
 		investorsCount = 0;
@@ -94,6 +100,7 @@ contract CrowdSale is Haltable {
 
 	function () stopInEmergency payable {
 		require(canInvest());
+		require(msg.value >= minInvestValue);
 
 		uint256 amount = msg.value;
 		uint256 realAmounted = 0;
