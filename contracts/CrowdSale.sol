@@ -48,6 +48,13 @@ contract CrowdSale is Haltable {
 			uint256 _weiInOneDollar,
 			uint256 _weiInOneToken) payable {
 
+		require(_start >= now);
+		require(_finish >= _start);
+		require(_beneficiary != address(0));
+		require(_weiInOneDollar > 0);
+		require(_weiInOneToken > 0);
+		require(_stageGoal.length <= 10);
+
 		startAt = _start;
 		finishAt = _finish;
 
@@ -60,7 +67,12 @@ contract CrowdSale is Haltable {
 		pricingStrategy = new PricingStrategy(_weiInOneToken);		
 
 		currentStageIndex = 0;
+		uint256 prevStageGoal = 0;
 		for(uint i = 0; i < _stageGoal.length; i++) {
+			require(_stageGoal[i] > prevStageGoal);
+
+			prevStageGoal = _stageGoal[i];
+
 			stageGoal[i] = convertingStrategy.dollarsToWei(_stageGoal[i]);
 			stageFinalized[i] = false;
 		}
@@ -70,7 +82,7 @@ contract CrowdSale is Haltable {
 		return convertingStrategy.setWeiInOneDollar(_weiInOneDollar);
 	}
 
-	function setWeiInOneDollar(uint256 _weiInOneToken) onlyOwner returns(bool) {		
+	function setWeiInOneToken(uint256 _weiInOneToken) onlyOwner returns(bool) {		
 		return pricingStrategy.setWeiInOneToken(_weiInOneToken);
 	}
 
@@ -183,15 +195,17 @@ contract CrowdSale is Haltable {
 	}
 
 	function canInvest() public constant returns(bool) {
-		if(now >= startAt && now <= finishAt)
+		if(now >= startAt && now <= finishAt) {
 			return true;
+		}
 
 		return false;
 	}
 
 	function canWithdraw() public constant returns(bool) {
-		if(now > finishAt && withdrawAmount[currentStageIndex][msg.sender] > 0)
+		if(now > finishAt && withdrawAmount[currentStageIndex][msg.sender] > 0) {
 			return true;
+		}
 
 		return false;
 	}

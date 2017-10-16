@@ -10,13 +10,19 @@ contract ConvertingStrategy is Ownable {
 	uint256 public weiInOneDollar;
 
 	function ConvertingStrategy (uint256 _weiInOneDollar) {
+		require(_weiInOneDollar > 0);
+
 		weiInOneDollar = _weiInOneDollar;
 	}	
 
 	function setWeiInOneDollar(uint256 _weiInOneDollar) onlyOwner returns(bool){
-		weiInOneDollar = _weiInOneDollar;
+		if(_weiInOneDollar > 0) {
+			weiInOneDollar = _weiInOneDollar;
 
-		return true;
+			return true;
+		}
+
+		return false;
 	}
 
 	function weiToDollars(uint256 _wei) constant returns(uint256) {
