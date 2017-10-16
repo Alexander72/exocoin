@@ -13,5 +13,6 @@ module.exports = function(deployer, network, accounts) {
     beneficiary,
     config.goals,
     Math.floor(web3.toWei(1, 'ether') / config.initialDollarsInOneEther),
+    Math.floor(web3.toWei(1, 'ether') / config.initialTokensInOneEther),
   );
 };

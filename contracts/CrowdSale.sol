@@ -45,7 +45,8 @@ contract CrowdSale is Haltable {
 			uint _finish,
 			address _beneficiary,
 			uint256[] _stageGoal,
-			uint256 _weiInOneDollar) payable {
+			uint256 _weiInOneDollar,
+			uint256 _weiInOneToken) payable {
 
 		startAt = _start;
 		finishAt = _finish;
@@ -56,7 +57,7 @@ contract CrowdSale is Haltable {
 		investorsCount = 0;
 
 		convertingStrategy = new ConvertingStrategy(_weiInOneDollar);
-		pricingStrategy = new PricingStrategy();		
+		pricingStrategy = new PricingStrategy(_weiInOneToken);		
 
 		currentStageIndex = 0;
 		for(uint i = 0; i < _stageGoal.length; i++) {
@@ -67,6 +68,10 @@ contract CrowdSale is Haltable {
 
 	function setWeiInOneDollar(uint256 _weiInOneDollar) onlyOwner returns(bool) {		
 		return convertingStrategy.setWeiInOneDollar(_weiInOneDollar);
+	}
+
+	function setWeiInOneDollar(uint256 _weiInOneToken) onlyOwner returns(bool) {		
+		return pricingStrategy.setWeiInOneToken(_weiInOneToken);
 	}
 
 	function setFinishAt(uint _finish) onlyOwner returns(bool) {		
@@ -83,7 +88,7 @@ contract CrowdSale is Haltable {
 
 		realAmounted = processPayment(amount, msg.sender);
 
-		uint256 tokenAmount = pricingStrategy.calculatePrice(realAmounted);
+		uint256 tokenAmount = pricingStrategy.calculateTokenAmount(realAmounted);
 		token.mint(msg.sender, tokenAmount);
 
 		Invested(msg.sender, realAmounted);
