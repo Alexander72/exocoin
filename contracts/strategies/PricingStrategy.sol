@@ -3,7 +3,7 @@ pragma solidity ^0.4.11;
 import "../libs/SafeMath.sol";
 import "../admin/Ownable.sol";
 
-contract PricingStrategy {
+contract PricingStrategy is Ownable {
 	using SafeMath for uint256;
 
 	uint256 public weiInOneToken;
