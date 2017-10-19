@@ -49,6 +49,10 @@ export default Backbone.View.extend({
 			}).then((finishAt) => {
 				let finish = new Date(finishAt * 1000);
 				let time = that.dateFormat(finish - now);
+				if(now < finish) {
+					$("#time_remained").html('crowdSale окончен');
+					return true;
+				}
 
 				$("#time_remained").html(time.days + ' дней, ' + time.hours + ' часов, ' + time.minutes + ' минут, ' + time.sec + ' секунд');
 			});
