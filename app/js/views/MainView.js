@@ -6,6 +6,8 @@ import CrowdSale from "../models/CrowdSale.js";
 import ExoCount from "../models/ExoCount.js";
 import ConvertingStrategy from "../models/ConvertingStrategy.js";
 
+import AddressView from './statistic_rows/AddressView.js';
+
 export default Backbone.View.extend({
 
 	el : 'body',
@@ -14,12 +16,22 @@ export default Backbone.View.extend({
 		'click .js-contest' : 'home'
 	},
 
+	views: [],
+
 	initialize: function(options) {
 		this.web3 = new web3Provider();
 
 		this.crowdSale = new CrowdSale();
 		this.exocoin = new ExoCount();
 		this.convertingStrategy = new ConvertingStrategy();
+
+		let temp = new AddressView();
+		//this.views.push();
+		//this.views.push(new TimerView());
+		//this.views.push(new TotalInvestedView());
+		//this.views.push(new CurrentStageGoalView());
+		//this.views.push(new TokenMintedView());
+		//this.views.push(new EtherDollarRatioView());
 
 		this.render();
 	},
@@ -72,7 +84,7 @@ export default Backbone.View.extend({
 				}
 			});
 
-		setTimeout(function() { that.renderTimer.apply(that); }, 330);
+		//setTimeout(function() { that.renderTimer.apply(that); }, 1000);
 	},
 
 	renderCurrentStageGoal: function() {
