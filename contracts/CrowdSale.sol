@@ -23,6 +23,9 @@ contract CrowdSale is Haltable {
     //goals in wei
     uint256[10] public stageGoal;
 
+    //goals in dollars
+    uint256[10] public stageGoalInDollar;
+
     mapping (uint => mapping(address => uint256)) public withdrawAmount;
     uint256[10] public stageInvested;
     bool[10] public stageFinalized;
@@ -80,12 +83,36 @@ contract CrowdSale is Haltable {
 			prevStageGoal = _stageGoal[i];
 
 			stageGoal[i] = convertingStrategy.dollarsToWei(_stageGoal[i]);
+			stageGoalInDollar[i] = _stageGoal[i];
+
 			stageFinalized[i] = false;
 		}
 	}
 
 	function setWeiInOneDollar(uint256 _weiInOneDollar) onlyOwner returns(bool) {		
-		return convertingStrategy.setWeiInOneDollar(_weiInOneDollar);
+		if(convertingStrategy.setWeiInOneDollar(_weiInOneDollar)) {	
+
+			currentStageIndex = 0;
+
+			for(uint i = 0; i < 10; i++) {
+				if(stageGoalInDollar[i] != 0) {
+
+					stageGoal[i] = convertingStrategy.dollarsToWei(stageGoalInDollar[i]);
+
+					if(totalInvested > stageGoal[i]) {
+						currentStageIndex = i + 1;
+
+						if(!stageFinalized[i]) {
+							finalizeStage(i);
+							
+						}
+					}
+					else {					
+						stageFinalized[i] = false;
+					}
+				}
+			}
+		}
 	}
 
 	function setWeiInOneToken(uint256 _weiInOneToken) onlyOwner returns(bool) {		
