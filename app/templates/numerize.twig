@@ -1,0 +1,16 @@
+{% if number_wrapper == true %}
+    {% if number_wrapper_class is defined %}
+        {% set number_custom %}<span class="{{ number_wrapper_class }}">{{ number }}</span>{% endset %}
+    {% else %}
+        {% set number_custom %}<span>{{ number }}</span>{% endset %}
+    {% endif %}
+{% else %}
+    {% set number_custom = number %}
+{% endif %}
+{% if number % 10 == 1 and  number != 11 %}
+    {{ number_custom }} {{ words.one }}
+{% elseif number % 10 >= 2 and number % 10 <= 4 and not (number >= 12 and number <= 14) %}
+    {{ number_custom }} {{ words.two }}
+{% else %}
+    {{ number_custom }} {{ words.zero }}
+{% endif %}

@@ -1,0 +1,15 @@
+{% if days %}
+	{% include './numerize.twig' with {number : days, words: {one:'день', two: 'дня', zero: 'дней'}} %}
+{% endif %}
+
+{% if hours %}
+	{% include './numerize.twig' with {number : hours, words: {one:'час', two: 'часа', zero: 'часов'}} %}
+{% endif %}
+
+{% if minutes %}
+	{% include './numerize.twig' with {number : minutes, words: {one:'минута', two: 'минуты', zero: 'минут'}} %}
+{% endif %}
+
+{% if seconds %}
+	{% include './numerize.twig' with {number : seconds, words: {one:'секунда', two: 'секунды', zero: 'секунд'}} %}
+{% endif %}
