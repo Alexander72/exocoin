@@ -2,15 +2,17 @@ import AbstractRowView from "./AbstractRowView.js";
 
 export default AbstractRowView.extend({
 
-	el: '#contract_address',
+	el: '#ether_got',
 
 	templateData: {
-		title: 'Адрес контракта',
+		title: 'Эфиров собрано',
 	},
 
 	render: function() {
 		this.crowdSale.contract.deployed().then((instance) => {
-			this.parentRender(instance.address);
+			return instance.totalInvested.call();
+		}).then((totalInvested)=> {
+			this.parentRender(this.fromWeiToEther(totalInvested) + ' ETH');
 		});
 	}
 });

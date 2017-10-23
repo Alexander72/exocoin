@@ -8,13 +8,13 @@ import ConvertingStrategy from "../../models/ConvertingStrategy.js";
 
 export default Backbone.View.extend({
 
-	el: '.table.statistic tbody',
-
-	template: null,
+	template: require('../../../templates/statistic-row.twig'),
 
 	templateData: {},
 
 	initialize: function(options) {
+		this.options = options;
+
 		this.web3 = new web3Provider();
 
 		this.crowdSale = new CrowdSale();
@@ -26,7 +26,25 @@ export default Backbone.View.extend({
 
 	render: function() {},
 
-	getAddValueToData: function(data) {
-		return _.extend(this.templateData, {value: data});
+	getRenderedTemplate: function(val) {
+		this.templateData = _.extend(this.templateData, {value: val});
+		return this.template(this.templateData);
+	},
+
+	parentRender: function(val) {		
+		this.$el.html(this.getRenderedTemplate(val));
+
+		return this;
+	},
+
+	fromWeiToEther: function(value) {
+		if(typeof value == 'object')
+			return this.formatBigNumber(this.web3.utils.fromWei(value, 'ether'));
+		else
+			return this.web3.utils.fromWei(value, 'ether');
+	},
+
+	formatBigNumber: function(bigNumber) {
+		return bigNumber.round(2).toString();
 	}
 });
