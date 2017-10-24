@@ -4,7 +4,7 @@ var CrowdSale = artifacts.require("CrowdSale");
 
 module.exports = function(deployer, network, accounts) {
   const config = networks.networks[network].initialization;
-  const beneficiary = network == 'live' && config.beneficiary ? config.beneficiary : accounts[0];
+  const beneficiary = network == 'live' && config.beneficiary ? config.beneficiary : accounts[1];
 
 
   deployer.deploy(CrowdSale,
