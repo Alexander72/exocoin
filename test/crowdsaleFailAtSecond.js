@@ -1,5 +1,6 @@
 const CrowdSale = artifacts.require("CrowdSale");
 const ExoCoin = artifacts.require("ExoCoin");
+const expect = require('chai').expect;
 
 contract('CrowdSale', function(accounts) {
 
@@ -97,14 +98,14 @@ contract('CrowdSale', function(accounts) {
 
 			done();
 		});
-	});/*
+	});
 
 	it('Check account 1 balance', function(done) {
-		let balance = web3.eth.getBalance(accounts[2]);
-		expect(balance).to.be.closeTo(web3.toWei(4333.333333333333, 'ether').toNumber(), 100000000, 'beneficiary should get first stage ether value');
+		let balance = web3.eth.getBalance(accounts[1]);
+		expect(balance.toNumber()).to.be.closeTo(web3.toWei(43333.333333333333, 'ether') * 1, 100000000, 'beneficiary should get first stage ether value');
 
 		done();
-	});*/
+	});
 
 	it('Check exocoin account 4 balance', function(done) {
 		CrowdSale.deployed().then((instance) => {
