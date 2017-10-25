@@ -6,7 +6,23 @@
   "directories": {
     "test": "test"
   },
-  "dependencies": {
+  "scripts": {
+    "lint": "eslint ./",
+    "build": "webpack",
+    "dev": "webpack-dev-server",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Alexander72/exocoin.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Alexander72/exocoin/issues"
+  },
+  "homepage": "https://github.com/Alexander72/exocoin#readme",
+  "devDependencies": {
     "babel-cli": "^6.26.0",
     "babel-core": "^6.26.0",
     "babel-eslint": "^6.1.2",
@@ -37,22 +53,7 @@
     "url-loader": "^0.6.2",
     "web3": "^0.19.1",
     "webpack": "^3.8.1",
-    "webpack-dev-server": "^2.9.3"
-  },
-  "scripts": {
-    "lint": "eslint ./",
-    "build": "webpack",
-    "dev": "webpack-dev-server",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Alexander72/exocoin.git"
-  },
-  "author": "",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/Alexander72/exocoin/issues"
-  },
-  "homepage": "https://github.com/Alexander72/exocoin#readme"
+    "webpack-dev-server": "^2.9.3",
+    "chai": "^4.1.2"
+  }
 }
