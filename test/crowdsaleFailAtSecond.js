@@ -115,9 +115,7 @@ contract('CrowdSale', function(accounts) {
 		}).then((tokenInstance) => {
 			return tokenInstance.balanceOf.call(accounts[4]);
 		}).then((balance) => {
-			console.log(balance.toString());
-			console.log(web3.toWei(20, 'ether'));
-			assert.equal(balance, web3.toWei(20, 'ether'), 'token should be minted');
+			assert.equal(balance, 20, 'token should be minted');
 			done();
 		});
 	});
@@ -131,8 +129,7 @@ contract('CrowdSale', function(accounts) {
 		}).then((tokenInstance) => {
 			return tokenInstance.balanceOf.call(accounts[5]);
 		}).then((balance) => {
-			console.log(balance.toNumber());
-			assert.equal(balance, web3.toWei(86660, 'ether'), 'token should be minted');
+			assert.equal(balance, 86660, 'token should be minted');
 			done();
 		});
 	});
